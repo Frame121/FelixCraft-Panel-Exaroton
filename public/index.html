@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FelixCraft Panel - Minecraft Server Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(135deg, #87CEEB 0%, #4682B4 50%, #000000 100%);
+      min-height: 100vh;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: transform 0.8s ease;
+    }
+
+    .welcome-screen.hidden {
+      transform: translateY(-100%);
+    }
+
+    .welcome-content {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo-container {
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+    }
+
+    .welcome-title {
+      font-size: 2.8em;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: linear-gradient(45deg, #fff, #87CEEB);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(135, 206, 235, 0.3);
+    }
+
+    .welcome-subtitle {
+      font-size: 1.1em;
+      margin-bottom: 40px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 300;
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, #87CEEB, #4682B4);
+      color: white;
+      border: none;
+      padding: 18px 40px;
+      border-radius: 30px;
+      font-size: 1.2em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+
+    .start-btn i {
+      font-size: 1.3em;
+    }
+
+    .main-panel {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: all 0.8s ease;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .main-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 3em;
+      background: linear-gradient(45deg, #fff, #87CEEB);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      text-shadow: 0 0 30px rgba(135, 206, 235, 0.3);
+    }
+
+    .header-subtitle {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.1em;
+      font-weight: 300;
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 12px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-50%) translateX(-5px);
+    }
+
+    .dashboard-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-bottom: 50px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #87CEEB, #4682B4);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .stat-icon {
+      font-size: 3em;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .stat-icon i {
+      background: linear-gradient(45deg, #87CEEB, #4682B4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-number {
+      font-size: 3em;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 1.1em;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .servers-section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      color: white;
+      font-size: 2em;
+      margin-bottom: 25px;
+      text-align: center;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .section-title i {
+      color: #87CEEB;
+    }
+
+    .servers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+    }
+
+    .server-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .server-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #87CEEB, #4682B4);
+    }
+
+    .server-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .server-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .server-icon {
+      font-size: 3em;
+      margin-right: 20px;
+      color: #666;
+    }
+
+    .server-icon i {
+      background: linear-gradient(45deg, #87CEEB, #4682B4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .server-info h3 {
+      font-size: 1.4em;
+      margin-bottom: 8px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .server-info h3 i {
+      color: #87CEEB;
+    }
+
+    .server-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .status-online {
+      background: rgba(34, 197, 94, 0.2);
+      color: #16a34a;
+      border: 1px solid #16a34a;
+    }
+
+    .status-offline {
+      background: rgba(239, 68, 68, 0.2);
+      color: #dc2626;
+      border: 1px solid #dc2626;
+    }
+
+    .status-starting {
+      background: rgba(251, 191, 36, 0.2);
+      color: #d97706;
+      border: 1px solid #d97706;
+    }
+
+    .status-stopping {
+      background: rgba(251, 191, 36, 0.2);
+      color: #d97706;
+      border: 1px solid #d97706;
+    }
+
+    .server-details {
+      margin: 25px 0;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 8px 0;
+    }
+
+    .detail-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .detail-label {
+      font-weight: 500;
+      color: #555;
+      font-size: 0.95em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-label i {
+      color: #87CEEB;
+      width: 16px;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95em;
+    }
+
+    .server-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      flex: 1;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1em;
+      min-width: 120px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    .control-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .btn-start:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669, #047857);
+    }
+
+    .btn-stop {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .btn-stop:hover:not(:disabled) {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+
+    .btn-restart {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+    }
+
+    .btn-restart:hover:not(:disabled) {
+      background: linear-gradient(135deg, #d97706, #b45309);
+    }
+
+    .control-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1.2em;
+    }
+
+    .loading i {
+      margin-right: 10px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      text-align: center;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .text-success { color: #16a34a !important; }
+    .text-danger { color: #dc2626 !important; }
+    .text-warning { color: #d97706 !important; }
+
+    @media (max-width: 768px) {
+      .welcome-title {
+        font-size: 2.2em;
+      }
+
+      .logo {
+        width: 100px;
+        height: 100px;
+      }
+
+      .servers-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .server-controls {
+        flex-direction: column;
+      }
+
+      .control-btn {
+        min-width: auto;
+      }
+
+      .header h1 {
+        font-size: 2.2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Screen -->
+  <div id="welcome-screen" class="welcome-screen">
+    <div class="welcome-content">
+      <div class="logo-container">
+        <img src="https://cdn.discordapp.com/attachments/1294284728157081685/1412047845342838825/1024xfelix.png?ex=68ce9a88&is=68cd4908&hm=a1c70e70ca340743c3262aff0d290253c1a8ed45913da53dd0fb330c7a465d2f" alt="FelixCraft Logo" class="logo">
+      </div>
+      <h1 class="welcome-title">
+        <i class="fas fa-cogs"></i>
+        FelixCraft
+      </h1>
+      <p class="welcome-subtitle">ระบบจัดการเซิร์ฟเวอร์ Minecraft ที่ทรงพลังและใช้งานง่าย</p>
+      <button id="start-btn" class="start-btn">
+        <i class="fas fa-rocket"></i>
+        เริ่มใช้งาน
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Panel -->
+  <div id="main-panel" class="main-panel">
+    <div class="header">
+      <button id="back-btn" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        กลับ
+      </button>
+      <h1>
+        <i class="fas fa-server"></i>
+        FelixCraft Panel
+      </h1>
+      <p class="header-subtitle">ระบบจัดการเซิร์ฟเวอร์ Minecraft</p>
+    </div>
+
+    <div id="error-message" class="error" style="display: none;"></div>
+    <div id="loading" class="loading">
+      <i class="fas fa-spinner"></i>
+      กำลังโหลดข้อมูลเซิร์ฟเวอร์...
+    </div>
+
+    <!-- Dashboard Stats -->
+    <div id="dashboard-stats" class="dashboard-stats" style="display: none;">
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fas fa-server"></i></span>
+        <div class="stat-number" id="total-servers">0</div>
+        <div class="stat-label">เซิร์ฟเวอร์ทั้งหมด</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fas fa-circle text-success"></i></span>
+        <div class="stat-number" id="online-servers">0</div>
+        <div class="stat-label">เซิร์ฟเวอร์ออนไลน์</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fas fa-cog fa-spin"></i></span>
+        <div class="stat-number" id="active-servers">0</div>
+        <div class="stat-label">เซิร์ฟเวอร์กำลังทำงาน</div>
+      </div>
+    </div>
+
+    <!-- Servers Section -->
+    <div class="servers-section">
+      <h2 class="section-title">
+        <i class="fas fa-list"></i>
+        รายการเซิร์ฟเวอร์
+      </h2>
+      <div id="servers-grid" class="servers-grid" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const mainPanel = document.getElementById('main-panel');
+    const startBtn = document.getElementById('start-btn');
+    const backBtn = document.getElementById('back-btn');
+    const loading = document.getElementById('loading');
+    const errorMessage = document.getElementById('error-message');
+    const serversGrid = document.getElementById('servers-grid');
+
+    let servers = [];
+
+    // Start button
+    startBtn.addEventListener('click', () => {
+      welcomeScreen.classList.add('hidden');
+      setTimeout(() => {
+        mainPanel.classList.add('visible');
+        loadServers();
+      }, 800);
+    });
+
+    // Back button
+    backBtn.addEventListener('click', () => {
+      mainPanel.classList.remove('visible');
+      setTimeout(() => {
+        welcomeScreen.classList.remove('hidden');
+      }, 800);
+    });
+
+    // Load servers
+    async function loadServers() {
+      try {
+        loading.style.display = 'block';
+        serversGrid.style.display = 'none';
+        const dashboardStats = document.getElementById('dashboard-stats');
+        if (dashboardStats) dashboardStats.style.display = 'none';
+        errorMessage.style.display = 'none';
+
+        console.log('Loading servers...');
+        const response = await fetch('/api/servers');
+        console.log('API Response:', response);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('API Data:', data);
+
+        servers = data.data || [];
+        console.log('Servers loaded:', servers.length);
+
+        renderDashboardStats();
+        renderServers();
+      } catch (error) {
+        console.error('Error loading servers:', error);
+        showError('เกิดข้อผิดพลาดในการโหลดเซิร์ฟเวอร์: ' + error.message);
+
+        // Show demo data if API fails
+        showDemoData();
+      } finally {
+        loading.style.display = 'none';
+        serversGrid.style.display = 'grid';
+        const dashboardStats = document.getElementById('dashboard-stats');
+        if (dashboardStats) dashboardStats.style.display = 'grid';
+      }
+    }
+
+    // Show demo data for testing
+    function showDemoData() {
+      console.log('Showing demo data...');
+      servers = [
+        {
+          id: 'demo1',
+          name: 'Survival Server',
+          status: 1,
+          players: 5,
+          maxPlayers: 20,
+          uptime: 3600
+        },
+        {
+          id: 'demo2',
+          name: 'Creative Server',
+          status: 0,
+          players: 0,
+          maxPlayers: 10,
+          uptime: 0
+        }
+      ];
+
+      renderDashboardStats();
+      renderServers();
+    }
+
+    // Render dashboard statistics
+    function renderDashboardStats() {
+      const totalServers = servers.length;
+      const onlineServers = servers.filter(server => getStatusClass(server.status) === 'status-online').length;
+      const activeServers = servers.filter(server => server.status === 1 || server.status === 2).length;
+
+      const totalServersEl = document.getElementById('total-servers');
+      const onlineServersEl = document.getElementById('online-servers');
+      const activeServersEl = document.getElementById('active-servers');
+
+      if (totalServersEl) totalServersEl.textContent = totalServers;
+      if (onlineServersEl) onlineServersEl.textContent = onlineServers;
+      if (activeServersEl) activeServersEl.textContent = activeServers;
+    }
+
+    // Render servers
+    function renderServers() {
+      serversGrid.innerHTML = '';
+
+      servers.forEach(server => {
+        const card = document.createElement('div');
+        card.className = 'server-card';
+
+        const statusClass = getStatusClass(server.status);
+
+        card.innerHTML = `
+          <div class="server-header">
+            <div class="server-icon">
+              <i class="fas fa-gamepad"></i>
+            </div>
+            <div class="server-info">
+              <h3>
+                <i class="fas fa-server"></i>
+                ${server.name}
+              </h3>
+              <span class="server-status ${statusClass}">
+                <i class="fas fa-info-circle"></i>
+                ${getStatusText(server.status)}
+              </span>
+            </div>
+          </div>
+
+          <div class="server-details">
+            <div class="detail-row">
+              <span class="detail-label">
+                <i class="fas fa-clock"></i>
+                เวลาทำงาน:
+              </span>
+              <span class="detail-value">${formatUptime(server.uptime || 0)}</span>
+            </div>
+          </div>
+
+          <div class="server-controls">
+            <button class="control-btn btn-start" onclick="startServer('${server.id}')" ${server.status === 1 ? 'disabled' : ''}>
+              <i class="fas fa-play"></i>
+              เริ่ม
+            </button>
+            <button class="control-btn btn-stop" onclick="stopServer('${server.id}')" ${server.status === 0 ? 'disabled' : ''}>
+              <i class="fas fa-stop"></i>
+              หยุด
+            </button>
+            <button class="control-btn btn-restart" onclick="restartServer('${server.id}')" ${server.status !== 1 ? 'disabled' : ''}>
+              <i class="fas fa-redo"></i>
+              รีสตาร์ท
+            </button>
+          </div>
+        `;
+
+        serversGrid.appendChild(card);
+      });
+    }
+
+    // Server control functions
+    async function startServer(id) {
+      try {
+        const response = await fetch(`/api/servers/${id}/start`, { method: 'POST' });
+        if (!response.ok) {
+          throw new Error('ไม่สามารถเริ่มเซิร์ฟเวอร์ได้');
+        }
+        alert('เซิร์ฟเวอร์กำลังเริ่ม...');
+        loadServers();
+      } catch (error) {
+        console.error('Error starting server:', error);
+        showError('เกิดข้อผิดพลาดในการเริ่มเซิร์ฟเวอร์: ' + error.message);
+      }
+    }
+
+    async function stopServer(id) {
+      try {
+        const response = await fetch(`/api/servers/${id}/stop`, { method: 'POST' });
+        if (!response.ok) {
+          throw new Error('ไม่สามารถหยุดเซิร์ฟเวอร์ได้');
+        }
+        alert('เซิร์ฟเวอร์กำลังหยุด...');
+        loadServers();
+      } catch (error) {
+        console.error('Error stopping server:', error);
+        showError('เกิดข้อผิดพลาดในการหยุดเซิร์ฟเวอร์: ' + error.message);
+      }
+    }
+
+    async function restartServer(id) {
+      try {
+        const response = await fetch(`/api/servers/${id}/restart`, { method: 'POST' });
+        if (!response.ok) {
+          throw new Error('ไม่สามารถรีสตาร์ทเซิร์ฟเวอร์ได้');
+        }
+        alert('เซิร์ฟเวอร์กำลังรีสตาร์ท...');
+        loadServers();
+      } catch (error) {
+        console.error('Error restarting server:', error);
+        showError('เกิดข้อผิดพลาดในการรีสตาร์ทเซิร์ฟเวอร์: ' + error.message);
+      }
+    }
+
+    // Utility functions
+    function getStatusClass(status) {
+      if (typeof status === 'string') {
+        status = status.toLowerCase();
+        if (status === 'online' || status === 'running') return 'status-online';
+        if (status === 'offline' || status === 'stopped') return 'status-offline';
+        if (status === 'starting') return 'status-starting';
+      }
+
+      switch(status) {
+        case 1: return 'status-online';
+        case 0: return 'status-offline';
+        case 2: return 'status-starting';
+        case 3: return 'status-stopping';
+        default: return 'status-offline';
+      }
+    }
+
+    function getStatusText(status) {
+      if (typeof status === 'string') {
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      }
+
+      switch(status) {
+        case 1: return 'ออนไลน์';
+        case 0: return 'ออฟไลน์';
+        case 2: return 'กำลังเริ่ม';
+        case 3: return 'กำลังหยุด';
+        default: return 'ออฟไลน์';
+      }
+    }
+
+    function formatUptime(seconds) {
+      if (!seconds || seconds === 0) return 'N/A';
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      if (hours > 0) {
+        return `${hours}ชั่วโมง ${minutes}นาที`;
+      }
+      return `${minutes}นาที`;
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      setTimeout(() => {
+        errorMessage.style.display = 'none';
+      }, 5000);
+    }
+
+    // Auto refresh every 30 seconds
+    setInterval(loadServers, 30000);
+  </script>
+</body>
+</html>
